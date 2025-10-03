@@ -231,7 +231,7 @@
 
                 <div className="grid grid-cols-3 gap-3">
                   {['No Sweetener', 'Sugar', 'Stevia'].map(sweetenerType => (
-                    <button key={sweetenerType} type="button" onClick={() => setFormData({...formData, sweetener: sweetenerType === 'No Sweetener' ? '' : sweetenerType})} className="py-3 px-4 rounded-lg font-medium transition" style={{backgroundColor: (formData.sweetener === sweetenerType || (formData.sweetener === '' && sweetenerType === 'No Sweetener')) ? 'rgb(210, 113, 89)' : '#E8E4E1', color: (formData.sweetener === sweetenerType || (formData.sweetener === '' && sweetenerType === 'No Sweetener')) ? '#F8F6F5' : '#374151'}}>{sweetenerType}</button>
+                    <button key={sweetenerType} type="button" onClick={() => setFormData({...formData, sweetener: sweetenerType === 'No Sweetener' ? '' : sweetenerType})} className="py-3 px-2 rounded-lg font-medium transition leading-tight" style={{backgroundColor: (formData.sweetener === sweetenerType || (formData.sweetener === '' && sweetenerType === 'No Sweetener')) ? 'rgb(210, 113, 89)' : '#E8E4E1', color: (formData.sweetener === sweetenerType || (formData.sweetener === '' && sweetenerType === 'No Sweetener')) ? '#F8F6F5' : '#374151', fontSize: '0.8rem'}}>{sweetenerType}</button>
                   ))}
                 </div>
 
