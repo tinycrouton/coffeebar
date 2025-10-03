@@ -113,7 +113,7 @@
                 <h1 className="text-5xl font-black text-gray-800 mb-4">Thanks!</h1>
                 <p className="text-xl text-gray-600 mb-8">Your order will be ready shortly</p>
                 <button onClick={() => setShowThankYou(false)} className="w-full text-white font-bold py-4 rounded-lg transition shadow-lg mb-4" style={{backgroundColor: '#FFA500'}} onMouseEnter={(e) => e.target.style.backgroundColor = '#FF8C00'} onMouseLeave={(e) => e.target.style.backgroundColor = '#FFA500'}>Place Another Order</button>
-                <button onClick={() => setView('queue')} className="text-blue-600 hover:text-blue-800 font-semibold text-base">Check your spot in the queue</button>
+                <button onClick={() => { setShowThankYou(false); setView('queue'); }} className="text-blue-600 hover:text-blue-800 font-semibold text-base">Check your spot in the queue</button>
               </div>
             </div>
           </div>
