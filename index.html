@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Runway Coffee Bar</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    
+    const Coffee = () => (
+      <svg className="w-10 h-10 mx-auto mb-2 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/>
+      </svg>
+    );
+
+    function App() {
+      const [view, setView] = useState('customer');
+      const [showThankYou, setShowThankYou] = useState(false);
+      const [showLocationPopup, setShowLocationPopup] = useState(false);
+      const [showErrorPopup, setShowErrorPopup] = useState(false);
+      const [errorMessages, setErrorMessages] = useState([]);
+      const [lastOrderId, setLastOrderId] = useState(null);
+      const [orders, setOrders] = useState(() => {
+        const saved = localStorage.getItem('coffeeOrders');
+        return saved ? JSON.parse(saved) : [];
+      });
+      const [location, setLocation] = useState('');
+      const [formData, setFormData] = useState({
+        name: '', drink: '', temperature: '', milk: '', flavor: '', sweetener: '', customization: ''
+      });
+
+      const allLocations = ['Front Room', 'Back Room', 'Main Conference Room', 'Conference Room 1', 'Conference Room 2', 'Recording Room', "I'll pick it up at the Coffee Bar"];
+      const drinkOptions = ['Latte', 'Cortado', 'Flat White', 'Cappuccino', 'Espresso Shot', 'Americano', 'Macchiato', 'Mocha', 'Matcha Latte'];
+
+      useEffect(() => {
+        setShowLocationPopup(true);
+      }, []);
+
+      useEffect(() => {
+        localStorage.setItem('coffeeOrders', JSON.stringify(orders));
+      }, [orders]);
+
+      const handleSubmit = () => {
+        const errors = [];
+        if (!formData.name) errors.push("What's your name?");
+        if (!formData.drink) errors.push("What drink do you want?");
+        if (!formData.temperature) errors.push("Hot or Iced?");
+        if (formData.drink !== 'Espresso Shot' && !formData.milk) errors.push("What kind of milk?");
+        
+        if (errors.length > 0) {
+          setErrorMessages(errors);
+          setShowErrorPopup(true);
+          return;
+        }
+        
+        const newOrder = {
+          id: Date.now(),
+          ...formData,
+          location: location || 'Unknown',
+          timestamp: new Date().toISOString(),
+          status: 'pending'
+        };
+        setOrders(prev => [...prev, newOrder]);
+        setLastOrderId(newOrder.id);
+        setFormData({ name: '', drink: '', temperature: '', milk: '', flavor: '', sweetener: '', customization: '' });
+        setShowThankYou(true);
+      };
+
+      const pendingOrders = orders.filter(o => o.status === 'pending');
+      const getTimeAgo = (timestamp) => {
+        const seconds = Math.floor((new Date() - new Date(timestamp)) / 1000);
+        return seconds < 60 ? `${seconds}s ago` : `${Math.floor(seconds / 60)}m ago`;
+      };
+
+      if (showThankYou) {
+        return (
+          <div className="min-h-screen p-4 flex items-center justify-center" style={{background: 'linear-gradient(to bottom, #d4ddd9, #7d958d)'}}>
+            <div className="max-w-md mx-auto w-full">
+              <div className="rounded-2xl shadow-xl p-8 text-center" style={{backgroundColor: '#F8F6F5'}}>
+                <h1 className="text-5xl font-black text-gray-800 mb-4">Thanks!</h1>
+                <p className="text-xl text-gray-600 mb-8">Your order will be ready shortly</p>
+                <button onClick={() => setShowThankYou(false)} className="w-full text-white font-bold py-4 rounded-lg transition shadow-lg mb-4" style={{backgroundColor: '#FFA500'}} onMouseEnter={(e) => e.target.style.backgroundColor = '#FF8C00'} onMouseLeave={(e) => e.target.style.backgroundColor = '#FFA500'}>Place Another Order</button>
+                <button onClick={() => setView('queue')} className="text-blue-600 hover:text-blue-800 font-semibold text-base">Check your spot in the queue</button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (view === 'queue') {
+        return (
+          <div className="min-h-screen p-4" style={{background: 'linear-gradient(to bottom, #d4ddd9, #7d958d)'}}>
+            <div className="max-w-md mx-auto">
+              <div className="rounded-2xl shadow-xl p-6 mt-8" style={{backgroundColor: '#F8F6F5'}}>
+                <div className="flex items-center justify-between mb-6">
+                  <button onClick={() => setView('customer')} className="text-gray-500 hover:text-gray-700 transition">← Back</button>
+                  <h1 className="text-2xl font-black text-gray-800">Order Queue</h1>
+                  <button onClick={() => setOrders([...orders])} className="text-blue-600 hover:text-blue-800 transition font-semibold text-sm">Refresh</button>
+                </div>
+                <p className="text-center text-gray-600 mb-6 text-sm">{pendingOrders.length === 0 ? 'No orders in queue' : `${pendingOrders.length} ${pendingOrders.length === 1 ? 'order' : 'orders'} in queue`}</p>
+                <div className="space-y-2 max-h-[500px] overflow-y-auto">
+                  {pendingOrders.length === 0 ? (
+                    <div className="text-center py-8 text-gray-400"><Coffee /><p className="text-sm">No orders in the queue</p></div>
+                  ) : (
+                    pendingOrders.map((order, index) => (
+                      <div key={order.id} className={`rounded-lg p-3 border-2 transition ${order.id === lastOrderId ? 'bg-yellow-100 border-yellow-400' : 'bg-white border-gray-200'}`}>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <div className="text-lg font-bold text-gray-400 flex-shrink-0">#{index + 1}</div>
+                            <div className="font-bold text-base text-gray-800 flex-shrink-0">{order.name}</div>
+                            <div className="text-sm text-gray-500 truncate">{order.drink}</div>
+                          </div>
+                          {order.id === lastOrderId && <span className="bg-yellow-400 text-yellow-900 px-2 py-1 rounded-full text-xs font-bold flex-shrink-0">YOU</span>}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="min-h-screen p-4" style={{background: 'linear-gradient(to bottom, #d4ddd9, #7d958d)'}}>
+          <div className="max-w-2xl mx-auto">
+            {showErrorPopup && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowErrorPopup(false)}>
+                <div className="rounded-2xl shadow-2xl p-6 max-w-md w-full" style={{backgroundColor: '#FEE2E2', border: '2px solid rgb(210, 113, 89)'}}>
+                  <h2 className="text-2xl font-bold mb-4 text-center" style={{color: 'rgb(210, 113, 89)'}}>wait a sec...</h2>
+                  <div className="space-y-2 mb-4">{errorMessages.map((msg, i) => <p key={i} className="text-lg font-medium" style={{color: 'rgb(185, 90, 70)'}}>• {msg}</p>)}</div>
+                </div>
+              </div>
+            )}
+            
+            {showLocationPopup && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 z-50 p-4" style={{display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh'}}>
+                <div className="rounded-2xl shadow-2xl p-6 w-full bg-blue-50 border-2 border-blue-200" style={{maxWidth: '400px'}}>
+                  <h2 className="text-2xl font-bold text-blue-900 mb-4 text-center">Choose Delivery Location</h2>
+                  <div className="space-y-2">
+                    {allLocations.map(loc => (
+                      <button key={loc} onClick={() => { setLocation(loc); setShowLocationPopup(false); }} className="w-full py-2 px-4 rounded-lg font-medium transition text-left" style={{backgroundColor: location === loc ? '#2A85B9' : '#D6EAF5', color: location === loc ? '#F8F6F5' : '#2A85B9'}}>{loc}</button>
+                    ))}
+                  </div>
+                  <button onClick={() => setShowLocationPopup(false)} className="mt-4 w-full py-2 bg-blue-200 hover:bg-blue-300 text-blue-800 rounded-lg font-medium transition">Cancel</button>
+                </div>
+              </div>
+            )}
+            
+            <div className="rounded-2xl shadow-xl p-8 mt-8" style={{backgroundColor: '#F8F6F5'}}>
+              {location && (
+                <div className="mb-4 bg-blue-50 border-2 border-blue-200 rounded-lg p-3">
+                  {location === "I'll pick it up at the Coffee Bar" ? (
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 text-center"><div className="text-sm text-blue-600 font-medium">Your order will be ready for pickup at</div><div className="text-xl font-bold text-blue-900 mt-1">the Coffee Bar</div></div>
+                      <button type="button" onClick={() => setShowLocationPopup(true)} className="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold rounded-lg transition text-sm whitespace-nowrap ml-4">Change location</button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 text-center"><p className="text-sm text-blue-600 font-medium">Your order will be delivered to:</p><p className="text-xl font-bold text-blue-900">{location}</p></div>
+                      <button type="button" onClick={() => setShowLocationPopup(true)} className="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold rounded-lg transition text-sm whitespace-nowrap ml-4">Change location</button>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              <div className="flex items-center justify-center mb-6"><h1 className="text-3xl md:text-4xl font-black text-gray-800">Runway Coffee Bar</h1></div>
+              
+              <div className="space-y-6">
+                <input type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-amber-500 focus:outline-none transition" placeholder="Enter your name" />
+                
+                <select value={formData.drink} onChange={(e) => { const newDrink = e.target.value; setFormData({...formData, drink: newDrink, flavor: newDrink === 'Mocha' ? 'Chocolate' : formData.flavor}); }} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-amber-500 focus:outline-none transition">
+                  <option value="">Choose a drink...</option>
+                  {drinkOptions.map(drink => <option key={drink} value={drink}>{drink}</option>)}
+                </select>
+
+                <div className="grid grid-cols-2 gap-3">
+                  {['Hot', 'Iced'].map(temp => (
+                    <button key={temp} type="button" onClick={() => setFormData({...formData, temperature: temp})} className="py-3 px-4 rounded-lg font-medium transition" style={{backgroundColor: formData.temperature === temp ? 'rgb(133, 151, 145)' : '#E8E4E1', color: formData.temperature === temp ? '#F8F6F5' : '#374151'}}>{temp}</button>
+                  ))}
+                </div>
+
+                {formData.drink !== 'Espresso Shot' && (
+                  <div className={`grid gap-3 ${formData.drink === 'Americano' ? 'grid-cols-4' : 'grid-cols-3'}`}>
+                    {formData.drink === 'Americano' && <button type="button" onClick={() => setFormData({...formData, milk: 'No Milk'})} className="py-3 px-4 rounded-lg font-medium transition" style={{backgroundColor: formData.milk === 'No Milk' ? 'rgb(178, 196, 226)' : '#E8E4E1', color: formData.milk === 'No Milk' ? '#F8F6F5' : '#374151'}}>No Milk</button>}
+                    {['Whole Milk', 'Oat Milk', 'Almond Milk'].map(milkType => (
+                      <button key={milkType} type="button" onClick={() => setFormData({...formData, milk: milkType})} className="py-3 px-4 rounded-lg font-medium transition" style={{backgroundColor: formData.milk === milkType ? 'rgb(178, 196, 226)' : '#E8E4E1', color: formData.milk === milkType ? '#F8F6F5' : '#374151'}}>{milkType}</button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-5 gap-2">
+                  {['No Flavor', 'Caramel', 'Hazelnut', 'Lavender', 'Chocolate'].map(flavorType => (
+                    <button key={flavorType} type="button" onClick={() => setFormData({...formData, flavor: flavorType === 'No Flavor' ? '' : flavorType})} className="py-3 px-2 rounded-lg font-medium transition text-sm" style={{backgroundColor: (formData.flavor === flavorType || (formData.flavor === '' && flavorType === 'No Flavor')) ? 'rgb(240, 175, 115)' : '#E8E4E1', color: (formData.flavor === flavorType || (formData.flavor === '' && flavorType === 'No Flavor')) ? '#F8F6F5' : '#374151'}}>{flavorType}</button>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  {['No Sweetener', 'Sugar', 'Stevia'].map(sweetenerType => (
+                    <button key={sweetenerType} type="button" onClick={() => setFormData({...formData, sweetener: sweetenerType === 'No Sweetener' ? '' : sweetenerType})} className="py-3 px-4 rounded-lg font-medium transition" style={{backgroundColor: (formData.sweetener === sweetenerType || (formData.sweetener === '' && sweetenerType === 'No Sweetener')) ? 'rgb(210, 113, 89)' : '#E8E4E1', color: (formData.sweetener === sweetenerType || (formData.sweetener === '' && sweetenerType === 'No Sweetener')) ? '#F8F6F5' : '#374151'}}>{sweetenerType}</button>
+                  ))}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Customization</label>
+                  <input type="text" value={formData.customization} onChange={(e) => setFormData({...formData, customization: e.target.value})} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-amber-500 focus:outline-none transition" placeholder="Add an extra shot, mix all the flavors together, triple sugar, etc..." />
+                </div>
+
+                <div className="flex justify-center">
+                  <button onClick={handleSubmit} className="text-white font-bold py-4 px-12 rounded-lg transition shadow-lg hover:shadow-xl" style={{backgroundColor: '#FFA500', width: '66%'}} onMouseEnter={(e) => e.target.style.backgroundColor = '#FF8C00'} onMouseLeave={(e) => e.target.style.backgroundColor = '#FFA500'}>Place Order</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

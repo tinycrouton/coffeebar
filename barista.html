@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Runway Coffee Bar - Barista Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    
+    const Coffee = () => <svg className="w-12 h-12 mx-auto mb-2 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/></svg>;
+    const Clock = ({ className, style }) => <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
+    const CheckCircle = ({ className, style }) => <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>;
+    const Users = ({ className, style }) => <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
+
+    function App() {
+      const [showKnockBox, setShowKnockBox] = useState(false);
+      const [orders, setOrders] = useState(() => {
+        const saved = localStorage.getItem('coffeeOrders');
+        return saved ? JSON.parse(saved) : [];
+      });
+
+      useEffect(() => {
+        const interval = setInterval(() => {
+          const saved = localStorage.getItem('coffeeOrders');
+          if (saved) setOrders(JSON.parse(saved));
+        }, 1000);
+        return () => clearInterval(interval);
+      }, []);
+
+      useEffect(() => {
+        localStorage.setItem('coffeeOrders', JSON.stringify(orders));
+      }, [orders]);
+
+      const markComplete = (orderId) => setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'complete' } : o));
+      const markPending = (orderId) => setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'pending' } : o));
+      const moveToKnockBox = (orderId) => setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'deleted' } : o));
+      const permanentlyDelete = (orderId) => setOrders(prev => prev.filter(o => o.id !== orderId));
+
+      const pendingOrders = orders.filter(o => o.status === 'pending');
+      const completedOrders = orders.filter(o => o.status === 'complete');
+      const knockBoxOrders = orders.filter(o => o.status === 'deleted');
+
+      const getTimeAgo = (timestamp) => {
+        const seconds = Math.floor((new Date() - new Date(timestamp)) / 1000);
+        return seconds < 60 ? `${seconds}s ago` : `${Math.floor(seconds / 60)}m ago`;
+      };
+
+      return (
+        <div className="min-h-screen p-4" style={{background: 'linear-gradient(to bottom, #d4ddd9, #7d958d)'}}>
+          <div className="max-w-6xl mx-auto">
+            <div className="rounded-2xl shadow-xl p-6 mt-4" style={{backgroundColor: '#F8F6F5'}}>
+              <div className="flex items-center justify-between mb-6">
+                <h1 className="text-3xl md:text-4xl font-black text-gray-800">Runway Coffee Bar - Dashboard</h1>
+                <button onClick={() => window.location.href='index.html'} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition">Customer View</button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-orange-50 rounded-lg p-4 border-2 border-orange-200">
+                  <div className="flex items-center justify-between">
+                    <div><p className="text-sm font-medium" style={{color: '#F9A600'}}>Pending</p><p className="text-3xl font-bold" style={{color: '#E89500'}}>{pendingOrders.length}</p></div>
+                    <Clock className="w-8 h-8" style={{color: '#F9A600'}} />
+                  </div>
+                </div>
+                <div className="bg-blue-50 rounded-lg p-4 border-2 border-blue-200">
+                  <div className="flex items-center justify-between">
+                    <div><p className="text-sm font-medium" style={{color: '#2A85B9'}}>Completed</p><p className="text-3xl font-bold" style={{color: '#2374A3'}}>{completedOrders.length}</p></div>
+                    <CheckCircle className="w-8 h-8" style={{color: '#2A85B9'}} />
+                  </div>
+                </div>
+                <div className="bg-purple-50 rounded-lg p-4 border-2 border-purple-200">
+                  <div className="flex items-center justify-between">
+                    <div><p className="text-sm font-medium" style={{color: '#B08CE1'}}>Total Orders</p><p className="text-3xl font-bold" style={{color: '#9F7ACC'}}>{orders.length}</p></div>
+                    <Users className="w-8 h-8" style={{color: '#B08CE1'}} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center"><Clock className="w-5 h-5 mr-2" style={{color: '#F9A600'}} />Pending Orders ({pendingOrders.length})</h2>
+                  <div className="space-y-4 max-h-96 overflow-y-auto">
+                    {pendingOrders.length === 0 ? (
+                      <div className="text-center py-8 text-gray-400"><Coffee /><p>No pending orders</p></div>
+                    ) : (
+                      pendingOrders.map(order => (
+                        <div key={order.id} className="bg-orange-50 border-2 border-orange-200 rounded-lg p-4 hover:shadow-md transition">
+                          <div className="flex justify-between items-start mb-2">
+                            <div><p className="font-bold text-lg text-gray-800">{order.name} <span className="text-gray-500">• {order.location}</span></p><p className="text-sm text-gray-500">{getTimeAgo(order.timestamp)}</p></div>
+                            <span className="px-3 py-1 rounded-full text-xs font-bold" style={{backgroundColor: '#FDE8CC', color: '#F9A600'}}>PENDING</span>
+                          </div>
+                          <p className="font-semibold mb-1" style={{color: '#E89500'}}>{order.drink} - {order.temperature}</p>
+                          {order.milk && <p className="text-sm font-medium" style={{color: '#D68700'}}>{order.milk}</p>}
+                          {order.flavor && <p className="text-sm font-medium" style={{color: '#D68700'}}>{order.flavor}</p>}
+                          {order.sweetener && <p className="text-sm font-medium" style={{color: '#D68700'}}>{order.sweetener}</p>}
+                          {order.customization && <p className="text-sm text-gray-600 italic">{order.customization}</p>}
+                          <button onClick={() => markComplete(order.id)} className="mt-3 w-full text-white font-bold py-2 rounded-lg transition" style={{backgroundColor: '#2A85B9'}} onMouseEnter={(e) => e.target.style.backgroundColor = '#2374A3'} onMouseLeave={(e) => e.target.style.backgroundColor = '#2A85B9'}>Mark Complete</button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center"><CheckCircle className="w-5 h-5 mr-2" style={{color: '#2A85B9'}} />Completed Orders ({completedOrders.length})</h2>
+                  <div className="space-y-4 max-h-96 overflow-y-auto">
+                    {completedOrders.length === 0 ? (
+                      <div className="text-center py-8 text-gray-400"><CheckCircle className="w-12 h-12 mx-auto mb-2 opacity-50" /><p>No completed orders yet</p></div>
+                    ) : (
+                      completedOrders.map(order => (
+                        <div key={order.id} className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <div><p className="font-bold text-lg text-gray-800">{order.name} <span className="text-gray-500">• {order.location}</span></p><p className="text-sm text-gray-500">{getTimeAgo(order.timestamp)}</p></div>
+                            <span className="px-3 py-1 rounded-full text-xs font-bold" style={{backgroundColor: '#D6EAF5', color: '#2A85B9'}}>COMPLETE</span>
+                          </div>
+                          <p className="font-semibold mb-1" style={{color: '#2374A3'}}>{order.drink} - {order.temperature}</p>
+                          {order.milk && <p className="text-sm font-medium" style={{color: '#1F6C96'}}>{order.milk}</p>}
+                          {order.flavor && <p className="text-sm font-medium" style={{color: '#1F6C96'}}>{order.flavor}</p>}
+                          {order.sweetener && <p className="text-sm font-medium" style={{color: '#1F6C96'}}>{order.sweetener}</p>}
+                          {order.customization && <p className="text-sm text-gray-600 italic">{order.customization}</p>}
+                          <div className="grid grid-cols-2 gap-2 mt-3">
+                            <button onClick={() => markPending(order.id)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 rounded-lg transition text-sm">Undo</button>
+                            <button onClick={() => moveToKnockBox(order.id)} className="text-white font-medium py-2 rounded-lg transition text-sm" style={{backgroundColor: '#F0524F'}} onMouseEnter={(e) => e.target.style.backgroundColor = '#D94742'} onMouseLeave={(e) => e.target.style.backgroundColor = '#F0524F'}>Delete</button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8">
+                <button onClick={() => setShowKnockBox(!showKnockBox)} className="w-full bg-gray-100 hover:bg-gray-200 rounded-lg p-4 text-left font-bold text-gray-700 transition flex items-center justify-between">
+                  <span>Knock Box ({knockBoxOrders.length})</span><span className="text-2xl">{showKnockBox ? '−' : '+'}</span>
+                </button>
+                
+                {showKnockBox && (
+                  <div className="mt-4 space-y-2 max-h-96 overflow-y-auto">
+                    {knockBoxOrders.length === 0 ? (
+                      <div className="text-center py-8 text-gray-400"><p>No deleted orders</p></div>
+                    ) : (
+                      knockBoxOrders.map(order => (
+                        <div key={order.id} className="bg-gray-100 border-2 border-gray-300 rounded-lg p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <div><p className="font-bold text-lg text-gray-600">{order.name} <span className="text-gray-400">• {order.location}</span></p><p className="text-sm text-gray-400">{getTimeAgo(order.timestamp)}</p></div>
+                            <span className="px-3 py-1 rounded-full text-xs font-bold bg-gray-300 text-gray-600">DELETED</span>
+                          </div>
+                          <p className="font-semibold mb-1 text-gray-600">{order.drink} - {order.temperature}</p>
+                          {order.milk && <p className="text-sm font-medium text-gray-500">{order.milk}</p>}
+                          {order.flavor && <p className="text-sm font-medium text-gray-500">{order.flavor}</p>}
+                          {order.sweetener && <p className="text-sm font-medium text-gray-500">{order.sweetener}</p>}
+                          {order.customization && <p className="text-sm text-gray-500 italic">{order.customization}</p>}
+                          <button onClick={() => permanentlyDelete(order.id)} className="mt-3 w-full text-white font-medium py-2 rounded-lg transition text-sm" style={{backgroundColor: '#F0524F'}} onMouseEnter={(e) => e.target.style.backgroundColor = '#D94742'} onMouseLeave={(e) => e.target.style.backgroundColor = '#F0524F'}>Delete Forever</button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
