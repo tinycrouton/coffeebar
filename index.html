@@ -50,7 +50,7 @@
         name: '', drink: '', temperature: '', milk: '', flavor: '', sweetener: '', customization: ''
       });
 
-      const allLocations = ['Front Room', 'Back Room', 'Main Conference Room', 'Conference Room 1', 'Conference Room 2', 'Recording Room', "I'll pick it up at the Coffee Bar"];
+      const allLocations = ["I'll pick it up at the Coffee Bar", 'Front Room', 'Back Room', 'Main Conference Room', 'Conference Room 1', 'Conference Room 2', 'Recording Room'];
       const drinkOptions = ['Latte', 'Cortado', 'Flat White', 'Cappuccino', 'Espresso Shot', 'Americano', 'Matcha Latte'];
 
       useEffect(() => {
@@ -242,6 +242,10 @@
 
                 <div className="flex justify-center">
                   <button onClick={handleSubmit} className="text-white font-bold py-4 px-12 rounded-lg transition shadow-lg hover:shadow-xl" style={{backgroundColor: '#FFA500', width: '66%'}} onMouseEnter={(e) => e.target.style.backgroundColor = '#FF8C00'} onMouseLeave={(e) => e.target.style.backgroundColor = '#FFA500'}>Place Order</button>
+                </div>
+
+                <div className="text-center mt-4">
+                  <button onClick={() => setView('queue')} className="text-blue-600 hover:text-blue-800 font-semibold text-sm">I just want to see the order queue</button>
                 </div>
               </div>
             </div>
